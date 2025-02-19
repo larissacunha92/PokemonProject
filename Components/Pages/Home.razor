@@ -1,0 +1,183 @@
+﻿@page "/"
+@using Pokemon.Components.Shared
+@using Pokemon.Services.Interfaces
+@inject IPokemonService client
+
+@if (!PageIsLoading)
+{
+    <div class="search-container">
+        <div class="form-group search-group">
+            <input type="text"
+            @bind="SearchQuery"
+            @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString()))"
+            @onkeydown="@(async e => {
+                    if (e.Key == $"Enter" && PokemonSuggestions.Any())
+                    {
+                        await modalRef.OpenModal(PokemonSuggestions.First());
+                        PokemonSuggestions.Clear();
+                        StateHasChanged();
+                    }
+                })"
+            class="form-control search-input" placeholder="Search Pokemon...">
+        </div>
+        @if (PokemonSuggestions.Any())
+        {
+            <ul class="suggestion-list">
+                @foreach (var suggestion in PokemonSuggestions)
+                {
+                    <li @onclick="async () => await modalRef?.OpenModal(suggestion)">@suggestion</li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="container">
+        <div class="pokemon-row">
+            @if (pokemonList.Any())
+            {
+                @foreach (var pokemon in pokemonList)
+                {
+                    <PokemonCard Pokemon="@pokemon" ModalRef="modalRef" />
+                }
+            }
+            else if (IsSearching)
+            {
+                <p>No Pokemon found!</p>
+            }
+        </div>
+    </div>
+
+    @if (!IsSearching)
+    {
+        <div class="button-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(1)">« First</button>
+                    </li>
+                    <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">‹ Prev</button>
+                    </li>
+
+                    @for (int i = Math.Max(1, CurrentPage - 2); i <= Math.Min(TotalPages, CurrentPage + 2); i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(pageNumber == CurrentPage ? "active" : "")">
+                            <button class="page-link" @onclick="@(async () => await ChangePage(pageNumber))">@pageNumber</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">Next ›</button>
+                    </li>
+                    <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(TotalPages)">Last »</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+}
+else
+{
+    <p>Loading...</p>
+}
+
+<PokemonModal @ref="modalRef" OnClose="CloseModal" />
+
+@code {
+    private PokemonModal? modalRef;
+
+    int CurrentPage = 1;
+    int ItemsPerPage = 10;
+    int TotalPages;
+    bool PageIsLoading = true;
+    List<Models.Pokemon> pokemonList = new();
+    string SearchQuery = "";
+    bool IsSearching = false;
+    List<string> AllPokemonNames = new();
+    List<string> PokemonSuggestions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await client.LoadAllPokemonNames();
+        if (result.IsSuccess)
+        {
+            AllPokemonNames = result.Data!;
+        }
+        else
+        {
+            Console.WriteLine($"Error loading Pokemon names: {result.ErrorMessage}");
+        }
+
+        var paginatedResult = await client.GetPaginatedPokemon(1, 1);
+        if (paginatedResult.IsSuccess && paginatedResult.Data != null)
+        {
+            TotalPages = (int)Math.Ceiling((double)paginatedResult.Data.TotalCount / ItemsPerPage);
+            await ChangePage(1);
+        }
+        else
+        {
+            Console.WriteLine($"Error fetching paginated Pokemon: {paginatedResult.ErrorMessage}");
+        }
+    }
+
+
+    private async Task ChangePage(int newPage)
+    {
+        if (newPage < 1 || newPage > TotalPages) return;
+
+        PageIsLoading = true;
+        CurrentPage = newPage;
+        StateHasChanged();
+
+        var paginatedResult = await client.GetPaginatedPokemon(CurrentPage, ItemsPerPage);
+        if (paginatedResult.IsSuccess && paginatedResult.Data != null)
+        {
+            var detailsResult = await client.GetFullPokemonDetails(paginatedResult.Data.Results);
+
+            if (detailsResult.IsSuccess)
+            {
+                pokemonList = detailsResult.Data!;
+            }
+            else
+            {
+                Console.WriteLine($"Error fetching Pokemon details: {detailsResult.ErrorMessage}");
+                pokemonList = new List<Models.Pokemon>();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Error fetching paginated Pokemon: {paginatedResult.ErrorMessage}");
+            pokemonList = new List<Models.Pokemon>();
+        }
+
+        PageIsLoading = false;
+        StateHasChanged();
+    }
+
+
+    private async Task FilterPokemonSuggestions(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        {
+            PokemonSuggestions.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        PokemonSuggestions = AllPokemonNames
+            .Where(name => name.StartsWith(query, StringComparison.OrdinalIgnoreCase))
+            .Take(5)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        SearchQuery = "";
+        PokemonSuggestions.Clear();
+        InvokeAsync(StateHasChanged);
+    }
+}

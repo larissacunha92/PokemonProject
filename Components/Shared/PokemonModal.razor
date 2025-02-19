@@ -1,0 +1,80 @@
+﻿@using Pokemon.Components.Shared
+@using Pokemon.Services.Interfaces
+@inject IPokemonService client
+@namespace Pokemon.Components.Shared
+
+@if (IsModalOpen && SelectedPokemon != null)
+{
+    <div class="modal-overlay @(IsClosing ? "fade-out" : "")" @onclick="CloseModal">
+        <div class="modal-content @(IsClosing ? "scale-out" : "")" @onclick:stopPropagation>
+            <h2 class="modal-title">@SelectedPokemon.Name</h2>
+            @if (@SelectedPokemon.Sprites.front_default != null) {
+                <img class="modal-image" src="@SelectedPokemon.Sprites.front_default" alt="@SelectedPokemon.Name" />
+            }
+            else {
+                <div class="no-picture-div">
+                    <p>Picture not found</p>
+                </div>
+            }
+
+            <ul class="stats-list">
+                @foreach (var stat in SelectedPokemon.Stats)
+                {
+                    <li><b>@stat.stat.name:</b> @stat.base_stat</li>
+                }
+            </ul>
+
+            <button class="close-btn" @onclick="CloseModal">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSelected { get; set; }
+
+    private bool IsModalOpen = false;
+    private bool IsClosing = false;
+    private Models.Pokemon? SelectedPokemon;
+
+    private async Task CloseModal()
+    {
+        IsClosing = true;
+        StateHasChanged();
+
+        await Task.Delay(300);
+
+        IsClosing = false;
+        IsModalOpen = false;
+        SelectedPokemon = null;
+
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task OpenModal(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var result = await client.GetPokemonByName(name.ToLower());
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            SelectedPokemon = result.Data;
+            IsClosing = false;
+            IsModalOpen = true;
+        }
+        else
+        {
+            Console.WriteLine($"Error fetching Pokemon '{name}': {result.ErrorMessage}");
+            SelectedPokemon = null;
+        }
+
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,32 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+.pokemon-card-generic {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #e3e3e3;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    width: 180px;
+    height: 200px;
+    text-align: center;
+}
+
+.pokemon-name {
+    text-transform: capitalize
+}
+
+.no-picture-div {
+    width: auto;
+    height: 120px;
+    background-color: #f7f7f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+    border-radius: 10px;
+    padding: 10px;
+}

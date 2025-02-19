@@ -1,0 +1,39 @@
+﻿<div class="pokemon-card-generic" @onclick="OpenModal">
+    @if (!string.IsNullOrWhiteSpace(Player))
+    {
+        <p><b>Trainer:</b> @Player</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Pokemon.Sprites?.front_default))
+    {
+        <img src="@Pokemon.Sprites.front_default" width="100" />
+    }
+    else
+    {
+        <div class="no-picture-div">
+            <p>Picture not found</p>
+        </div>
+    }
+
+    <p class="pokemon-name">@Pokemon.Name</p>
+
+    @if (!string.IsNullOrWhiteSpace(BattleResult))
+    {
+        <p><b>HP:</b> @Pokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Models.Pokemon Pokemon { get; set; } = default!;
+    [Parameter] public PokemonModal? ModalRef { get; set; }
+
+    [Parameter] public string? Player { get; set; }
+    [Parameter] public string BattleResult { get; set; } = "";
+
+    private async Task OpenModal()
+    {
+        if (Player == null){
+            await ModalRef.OpenModal(Pokemon.Name);
+        }
+    }
+}

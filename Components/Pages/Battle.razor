@@ -1,0 +1,232 @@
+﻿@page "/battle"
+@using Pokemon.Components.Shared
+@using Pokemon.Services.Interfaces
+@inject IPokemonService client
+
+<h1 class="battle-title" style="display: flex; justify-content: center; margin-bottom: 40px">Battle Arena</h1>
+
+<div class="battle-search-container">
+    <div class="search-box">
+        <input type="text" @bind="FirstPokemonSearchQuery"
+        @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString(), true))"
+        class="form-control search-input" placeholder="Search First Pokemon...">
+        <button class="btn btn-secondary clear-btn" @onclick="() => ClearPokemon(true)" disabled="@string.IsNullOrWhiteSpace(FirstPokemonSearchQuery)">Clear</button>
+        @if (FirstPokemonSuggestions.Any())
+        {
+            <ul class="suggestion-list">
+                @foreach (var suggestion in FirstPokemonSuggestions)
+                {
+                    <li @onclick="() => SelectFirstPokemon(suggestion)">@suggestion</li>
+                }
+            </ul>
+        }
+    </div>
+
+    <button class="btn btn-danger" @onclick="GetRandomPokemon">Random Fight</button>
+
+    <div class="search-box">
+        <input type="text" @bind="SecondPokemonSearchQuery"
+        @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString(), false))"
+        class="form-control search-input" placeholder="Search Second Pokemon...">
+        <button class="btn btn-secondary clear-btn" @onclick="() => ClearPokemon(false)" disabled="@string.IsNullOrWhiteSpace(SecondPokemonSearchQuery)">Clear</button>
+        @if (SecondPokemonSuggestions.Any())
+        {
+            <ul class="suggestion-list">
+                @foreach (var suggestion in SecondPokemonSuggestions)
+                {
+                    <li @onclick="() => SelectSecondPokemon(suggestion)">@suggestion</li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@if (FirstPokemon != null || SecondPokemon != null)
+{
+    <div class="battle-container">
+        @if (FirstPokemon != null && !IsLoading)
+        {
+            <PokemonCard Pokemon="@FirstPokemon" Player="Player 1" />
+        }
+
+        @if (FirstPokemon != null && SecondPokemon != null && !IsLoading)
+        {
+            <button class="btn btn-lg btn-danger fight-btn" @onclick="StartBattle">Fight</button>
+        }
+
+        @if (SecondPokemon != null && !IsLoading)
+        {
+            <PokemonCard Pokemon="@SecondPokemon" Player="Player 2" />
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(BattleResult) && !IsLoading)
+{
+    <h2 class="battle-result">@BattleResult</h2>
+}
+
+<PokemonModal @ref="modalRef" OnClose="CloseModal" />
+
+@code {
+    private PokemonModal? modalRef;
+    string FirstPokemonSearchQuery = "";
+    string SecondPokemonSearchQuery = "";
+    List<string> FirstPokemonSuggestions = new();
+    List<string> SecondPokemonSuggestions = new();
+    Models.Pokemon? FirstPokemon = null;
+    Models.Pokemon? SecondPokemon = null;
+    string BattleResult = "";
+    List<string> AllPokemonNames = new();
+    bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await client.LoadAllPokemonNames();
+
+        if (result.IsSuccess)
+        {
+            AllPokemonNames = result.Data!;
+        }
+        else
+        {
+            Console.WriteLine($"Error loading Pokemon names: {result.ErrorMessage}");
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task FilterPokemonSuggestions(string query, bool isFirstPokemon)
+    {
+        var result = await client.GetFilteredPokemonSuggestions(query);
+
+        if (result.IsSuccess)
+        {
+            if (isFirstPokemon)
+                FirstPokemonSuggestions = result.Data!;
+            else
+                SecondPokemonSuggestions = result.Data!;
+        }
+        else
+        {
+            Console.WriteLine($"Error filtering Pokemon suggestions: {result.ErrorMessage}");
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task SelectFirstPokemon(string name)
+    {
+        FirstPokemonSearchQuery = name;
+        FirstPokemonSuggestions.Clear();
+
+        var result = await client.GetPokemonByName(name.ToLower());
+
+        if (result.IsSuccess)
+        {
+            FirstPokemon = result.Data!;
+        }
+        else
+        {
+            Console.WriteLine($"Error fetching Pokemon '{name}': {result.ErrorMessage}");
+            FirstPokemon = null;
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task SelectSecondPokemon(string name)
+    {
+        SecondPokemonSearchQuery = name;
+        SecondPokemonSuggestions.Clear();
+
+        var result = await client.GetPokemonByName(name.ToLower());
+
+        if (result.IsSuccess)
+        {
+            SecondPokemon = result.Data!;
+        }
+        else
+        {
+            Console.WriteLine($"Error fetching Pokemon '{name}': {result.ErrorMessage}");
+            SecondPokemon = null;
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task GetRandomPokemon()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var firstResult = await client.GetRandomPokemon();
+        var secondResult = await client.GetRandomPokemon();
+
+        if (firstResult.IsSuccess && secondResult.IsSuccess)
+        {
+            await SelectFirstPokemon(firstResult.Data!.Name);
+            await SelectSecondPokemon(secondResult.Data!.Name);
+            StartBattle();
+        }
+        else
+        {
+            Console.WriteLine("Error fetching random Pokemon.");
+            if (!firstResult.IsSuccess) Console.WriteLine($"First Pokemon Error: {firstResult.ErrorMessage}");
+            if (!secondResult.IsSuccess) Console.WriteLine($"Second Pokemon Error: {secondResult.ErrorMessage}");
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+
+    private void ClearPokemon(bool isFirstPokemon)
+    {
+        if (isFirstPokemon) {
+            FirstPokemonSearchQuery = "";
+            FirstPokemon = null;
+            FirstPokemonSuggestions.Clear();
+            BattleResult = "";
+        }
+        else {
+            SecondPokemonSearchQuery = "";
+            SecondPokemon = null;
+            SecondPokemonSuggestions.Clear();
+            BattleResult = "";
+        }
+    }
+
+    private void StartBattle()
+    {
+        int firstPokemonHP = FirstPokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat ?? 0;
+        int secondPokemonHP = SecondPokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat ?? 0;
+
+        string firstPokemonName = char.ToUpper(FirstPokemon.Name[0]) + FirstPokemon.Name.Substring(1);
+        string secondPokemonName = char.ToUpper(SecondPokemon.Name[0]) + SecondPokemon.Name.Substring(1);
+
+        if (firstPokemonHP > secondPokemonHP)
+        {
+            BattleResult = $"{firstPokemonName} wins with {firstPokemonHP} HP vs {secondPokemonHP} HP!";
+        }
+        else if (secondPokemonHP > firstPokemonHP)
+        {
+            BattleResult = $"{secondPokemonName} wins with {secondPokemonHP} HP vs {firstPokemonHP} HP!";
+        }
+        else
+        {
+            BattleResult = "It's a tie!";
+        }
+    }
+
+    private void CloseModal()
+    {
+        FirstPokemonSuggestions.Clear();
+        SecondPokemonSuggestions.Clear();
+        StateHasChanged();
+    }
+}
