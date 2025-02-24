@@ -60,7 +60,7 @@
     {
         if (string.IsNullOrWhiteSpace(name)) return;
 
-        var result = await client.GetPokemonByName(name.ToLower());
+        var result = await client.GetPokemonByNameOrId(name.ToLower());
 
         if (result.IsSuccess && result.Data != null)
         {

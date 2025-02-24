@@ -9,7 +9,7 @@
     <div class="search-box">
         <input type="text" @bind="FirstPokemonSearchQuery"
         @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString(), true))"
-        class="form-control search-input" placeholder="Search First Pokemon...">
+        class="form-control search-input" id="firstPokemon" placeholder="Search First Pokemon...">
         <button class="btn btn-secondary clear-btn" @onclick="() => ClearPokemon(true)" disabled="@string.IsNullOrWhiteSpace(FirstPokemonSearchQuery)">Clear</button>
         @if (FirstPokemonSuggestions.Any())
         {
@@ -22,12 +22,12 @@
         }
     </div>
 
-    <button class="btn btn-danger" @onclick="GetRandomPokemon">Random Fight</button>
+    <button class="btn btn-danger" @onclick="GetRandomPokemons">Random Fight</button>
 
     <div class="search-box">
         <input type="text" @bind="SecondPokemonSearchQuery"
         @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString(), false))"
-        class="form-control search-input" placeholder="Search Second Pokemon...">
+               class="form-control search-input" id="secondPokemon" placeholder="Search Second Pokemon...">
         <button class="btn btn-secondary clear-btn" @onclick="() => ClearPokemon(false)" disabled="@string.IsNullOrWhiteSpace(SecondPokemonSearchQuery)">Clear</button>
         @if (SecondPokemonSuggestions.Any())
         {
@@ -122,7 +122,7 @@
         FirstPokemonSearchQuery = name;
         FirstPokemonSuggestions.Clear();
 
-        var result = await client.GetPokemonByName(name.ToLower());
+        var result = await client.GetPokemonByNameOrId(name.ToLower());
 
         if (result.IsSuccess)
         {
@@ -143,7 +143,7 @@
         SecondPokemonSearchQuery = name;
         SecondPokemonSuggestions.Clear();
 
-        var result = await client.GetPokemonByName(name.ToLower());
+        var result = await client.GetPokemonByNameOrId(name.ToLower());
 
         if (result.IsSuccess)
         {
@@ -159,25 +159,22 @@
     }
 
 
-    private async Task GetRandomPokemon()
+    private async Task GetRandomPokemons()
     {
         IsLoading = true;
         StateHasChanged();
 
-        var firstResult = await client.GetRandomPokemon();
-        var secondResult = await client.GetRandomPokemon();
+        var result = await client.GetRandomPokemons();
 
-        if (firstResult.IsSuccess && secondResult.IsSuccess)
+        if (result.IsSuccess)
         {
-            await SelectFirstPokemon(firstResult.Data!.Name);
-            await SelectSecondPokemon(secondResult.Data!.Name);
+            await SelectFirstPokemon(result.Data![0].Name);
+            await SelectSecondPokemon(result.Data![1].Name);
             StartBattle();
         }
         else
         {
-            Console.WriteLine("Error fetching random Pokemon.");
-            if (!firstResult.IsSuccess) Console.WriteLine($"First Pokemon Error: {firstResult.ErrorMessage}");
-            if (!secondResult.IsSuccess) Console.WriteLine($"Second Pokemon Error: {secondResult.ErrorMessage}");
+            // Console.WriteLine("Error fetching random Pokemon.");
         }
 
         IsLoading = false;

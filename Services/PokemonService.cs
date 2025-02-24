@@ -1,6 +1,7 @@
 ﻿using Pokemon.Models;
 using Pokemon.Services.Interfaces;
-using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Threading;
 using static Pokemon.Models.ApiResponse;
 
 namespace Pokemon.Services
@@ -8,6 +9,8 @@ namespace Pokemon.Services
     public class PokemonService : IPokemonService
     {
         private readonly HttpClient _client;
+        private static List<string>? _cachedPokemonNames;
+        private static readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
 
         public PokemonService(HttpClient client)
         {
@@ -15,128 +18,198 @@ namespace Pokemon.Services
             _client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
         }
 
-        public async Task<Result<Pokemon.Models.Pokemon>> GetPokemonByName(string nameOrId)
+        public async Task<Result<Pokemon.Models.Pokemon>> GetPokemonByNameOrId(string nameOrId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var pokemon = await _client.GetFromJsonAsync<Pokemon.Models.Pokemon>($"{nameOrId}");
+                var pokemon = await _client.GetFromJsonAsync<Pokemon.Models.Pokemon>($"{nameOrId}", cancellationToken);
                 return pokemon != null
                     ? Result<Pokemon.Models.Pokemon>.Success(pokemon)
                     : Result<Pokemon.Models.Pokemon>.Fail("Pokemon not found.");
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error fetching Pokemon '{nameOrId}': {ex.Message}");
-                return Result<Pokemon.Models.Pokemon>.Fail("An error occurred while fetching Pokemon data.");
+                return Result<Pokemon.Models.Pokemon>.Fail($"An error occurred while fetching Pokemon data. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<Pokemon.Models.Pokemon>> GetRandomPokemon()
+        public async Task<Result<List<Pokemon.Models.Pokemon>>> GetRandomPokemons(CancellationToken cancellationToken = default)
         {
             try
             {
-                var randomId = new Random().Next(1, 1025);
-                return await GetPokemonByName(randomId.ToString());
+                var allPokemonResult = await LoadAllPokemonNames(cancellationToken);
+
+                if (!allPokemonResult.IsSuccess || allPokemonResult.Data == null || !allPokemonResult.Data.Any())
+                    return Result<List<Pokemon.Models.Pokemon>>.Fail("Failed to load Pokemon names or no Pokemon available.");
+
+                var pokemonCount = allPokemonResult.Data.Count;
+                int half = (pokemonCount + 1) / 2;
+                const int maxAttempts = 10;
+                int attempts = 0;
+
+                Pokemon.Models.Pokemon? firstPokemon = null;
+                Pokemon.Models.Pokemon? secondPokemon = null;
+
+                while (attempts < maxAttempts && (firstPokemon == null || secondPokemon == null))
+                {
+                    if (firstPokemon == null)
+                    {
+                        int firstId = RandomNumberGenerator.GetInt32(1, half + 1);
+                        var firstResult = await GetPokemonByNameOrId(firstId.ToString(), cancellationToken);
+                        if (firstResult.IsSuccess)
+                        {
+                            firstPokemon = firstResult.Data;
+                        }
+                    }
+
+                    if (secondPokemon == null)
+                    {
+                        int secondId = RandomNumberGenerator.GetInt32(half + 1, pokemonCount + 1);
+                        var secondResult = await GetPokemonByNameOrId(secondId.ToString(), cancellationToken);
+                        if (secondResult.IsSuccess)
+                        {
+                            secondPokemon = secondResult.Data;
+                        }
+                    }
+
+                    attempts++;
+                }
+
+                if (firstPokemon == null || secondPokemon == null)
+                {
+                    return Result<List<Pokemon.Models.Pokemon>>.Fail("Failed to retrieve random Pokemon after multiple attempts.");
+                }
+
+                var randomPokemons = new List<Pokemon.Models.Pokemon>
+                {
+                    firstPokemon,
+                    secondPokemon
+                };
+
+                return Result<List<Pokemon.Models.Pokemon>>.Success(randomPokemons);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error fetching random Pokemon: {ex.Message}");
-                return Result<Pokemon.Models.Pokemon>.Fail("An error occurred while fetching a random Pokemon.");
+                return Result<List<Pokemon.Models.Pokemon>>.Fail($"An error occurred while fetching random Pokemon. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<PokemonList>> GetPaginatedPokemon(int currentPage, int itemsPerPage = 10)
+
+        public async Task<Result<PokemonList>> GetPaginatedPokemon(int currentPage, int itemsPerPage = 10, CancellationToken cancellationToken = default)
         {
             try
             {
                 int offset = (currentPage - 1) * itemsPerPage;
-                var paginatedData = await _client.GetFromJsonAsync<PokemonList>($"?offset={offset}&limit={itemsPerPage}");
+                var paginatedData = await _client.GetFromJsonAsync<PokemonList>($"?offset={offset}&limit={itemsPerPage}", cancellationToken);
 
                 return paginatedData != null
                     ? Result<PokemonList>.Success(paginatedData)
                     : Result<PokemonList>.Fail("Failed to fetch paginated Pokemon data.");
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error fetching paginated Pokemon: {ex.Message}");
-                return Result<PokemonList>.Fail("An error occurred while fetching paginated Pokemon data.");
+                return Result<PokemonList>.Fail($"An error occurred while fetching paginated Pokemon data. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<List<Pokemon.Models.Pokemon>>> GetFullPokemonDetails(List<PokemonResult> pokemonResults)
+        public async Task<Result<List<Pokemon.Models.Pokemon>>> GetFullPokemonDetails(List<PokemonResult> pokemonResults, CancellationToken cancellationToken = default)
         {
             try
             {
                 var tasks = pokemonResults.Select(async p =>
                 {
-                    var result = await GetPokemonByName(p.Name);
-                    return result.IsSuccess ? result.Data! : new Pokemon.Models.Pokemon();
+                    var result = await GetPokemonByNameOrId(p.Name, cancellationToken);
+                    if (!result.IsSuccess)
+                    {
+                        throw new Exception($"Failed to fetch pokemon details. Error: " + result.ErrorMessage);
+                    }
+                    return result.Data!;
                 });
 
-                return Result<List<Pokemon.Models.Pokemon>>.Success((await Task.WhenAll(tasks)).ToList());
+                var pokemonList = (await Task.WhenAll(tasks)).ToList();
+                return Result<List<Pokemon.Models.Pokemon>>.Success(pokemonList);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error fetching full Pokemon details: {ex.Message}");
-                return Result<List<Pokemon.Models.Pokemon>>.Fail("An error occurred while fetching Pokemon details.");
+                return Result<List<Pokemon.Models.Pokemon>>.Fail($"An error occurred while fetching Pokemon details. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<List<string>>> LoadAllPokemonNames()
+        public async Task<Result<List<string>>> LoadAllPokemonNames(CancellationToken cancellationToken = default)
         {
             try
             {
-                var allPokemon = new List<string>();
-                int offset = 0;
-                int limit = 100;
-                bool hasMore = true;
-
-                while (hasMore)
+                if (_cachedPokemonNames != null && _cachedPokemonNames.Any())
                 {
-                    var response = await GetPaginatedPokemon(offset / limit + 1, limit);
-                    if (response.IsSuccess && response.Data!.Results.Any())
-                    {
-                        allPokemon.AddRange(response.Data.Results
-                            .Select(p => char.ToUpper(p.Name[0]) + p.Name.Substring(1)));
-                        offset += limit;
-                    }
-                    else
-                    {
-                        hasMore = false;
-                    }
+                    return Result<List<string>>.Success(_cachedPokemonNames);
                 }
 
-                return Result<List<string>>.Success(allPokemon);
+                await _cacheLock.WaitAsync(cancellationToken);
+
+                try
+                {
+                    if (_cachedPokemonNames == null || !_cachedPokemonNames.Any())
+                    {
+                        var allPokemon = new List<string>();
+                        int offset = 0;
+                        int limit = 100;
+                        bool hasMore = true;
+
+                        while (hasMore)
+                        {
+                            var response = await GetPaginatedPokemon(offset / limit + 1, limit, cancellationToken);
+
+                            if (!response.IsSuccess)
+                            {
+                                return Result<List<string>>.Fail(response.ErrorMessage ?? "API call failed.");
+                            }
+
+                            if (response.Data!.Results.Any())
+                            {
+                                allPokemon.AddRange(response.Data.Results.Select(p => char.ToUpper(p.Name[0]) + p.Name.Substring(1))); offset += limit;
+                            }
+                            else
+                            {
+                                hasMore = false;
+                            }
+                        }
+
+                        _cachedPokemonNames = allPokemon;
+                    }
+                    return Result<List<string>>.Success(_cachedPokemonNames);
+                }
+                finally
+                {
+                    _cacheLock.Release();
+                }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error loading Pokemon names: {ex.Message}");
-                return Result<List<string>>.Fail("An error occurred while loading Pokemon names.");
+                return Result<List<string>>.Fail($"An error occurred while loading Pokemon names. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<List<string>>> GetFilteredPokemonSuggestions(string query)
+        public async Task<Result<List<string>>> GetFilteredPokemonSuggestions(string query, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
                     return Result<List<string>>.Success(new List<string>());
 
-                var allPokemonNames = await LoadAllPokemonNames();
+                var allPokemonNames = await LoadAllPokemonNames(cancellationToken);
                 if (!allPokemonNames.IsSuccess)
-                    return Result<List<string>>.Fail(allPokemonNames.ErrorMessage);
+                    return Result<List<string>>.Fail(allPokemonNames.ErrorMessage ?? "API call failed.");
 
                 var suggestions = allPokemonNames.Data!
                     .Where(name => name.StartsWith(query, StringComparison.OrdinalIgnoreCase))
-                    .Take(5)
+                    .Take(10)
                     .ToList();
 
                 return Result<List<string>>.Success(suggestions);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error filtering Pokemon suggestions: {ex.Message}");
-                return Result<List<string>>.Fail("An error occurred while filtering Pokemon suggestions.");
+                return Result<List<string>>.Fail($"An error occurred while filtering Pokemon suggestions. Error: {e.Message}");
             }
         }
     }
