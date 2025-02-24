@@ -1,11 +1,12 @@
 ﻿@page "/battle"
 @using Pokemon.Components.Shared
 @using Pokemon.Services.Interfaces
+@using BlazorBootstrap
 @inject IPokemonService client
 
 <h1 class="battle-title" style="display: flex; justify-content: center; margin-bottom: 40px">Battle Arena</h1>
 
-<div class="battle-search-container">
+<div class="battle-container">
     <div class="search-box">
         <input type="text" @bind="FirstPokemonSearchQuery"
         @oninput="@(async e => await FilterPokemonSuggestions(e.Value?.ToString(), true))"
@@ -41,17 +42,24 @@
     </div>
 </div>
 
+@if(IsLoading)
+{
+    <div class="loading-container">
+        <Spinner Color="SpinnerColor.Danger"></Spinner>
+    </div>
+}
+
 @if (FirstPokemon != null || SecondPokemon != null)
 {
     <div class="battle-container">
         @if (FirstPokemon != null && !IsLoading)
         {
-            <PokemonCard Pokemon="@FirstPokemon" Player="Player 1" />
+            <PokemonCard Pokemon="@FirstPokemon" Player="Player 1"/>
         }
 
         @if (FirstPokemon != null && SecondPokemon != null && !IsLoading)
         {
-            <button class="btn btn-lg btn-danger fight-btn" @onclick="StartBattle">Fight</button>
+            <button class="btn btn-danger" @onclick="StartBattle">Fight</button>
         }
 
         @if (SecondPokemon != null && !IsLoading)
@@ -63,7 +71,7 @@
 
 @if (!string.IsNullOrEmpty(BattleResult) && !IsLoading)
 {
-    <h2 class="battle-result">@BattleResult</h2>
+    <h2 class="battle-title">@BattleResult</h2>
 }
 
 <PokemonModal @ref="modalRef" OnClose="CloseModal" />

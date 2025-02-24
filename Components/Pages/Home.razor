@@ -2,6 +2,7 @@
 @using Pokemon.Components.Shared
 @using Pokemon.Services.Interfaces
 @inject IPokemonService client
+@using BlazorBootstrap
 
 @if (!PageIsLoading)
 {
@@ -80,7 +81,9 @@
 }
 else
 {
-    <p>Loading...</p>
+    <div class="loading-container">
+        <Spinner Color="SpinnerColor.Danger"></Spinner>
+    </div>
 }
 
 <PokemonModal @ref="modalRef" OnClose="CloseModal" />
