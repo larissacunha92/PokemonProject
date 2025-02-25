@@ -6,16 +6,15 @@ using static Pokemon.Models.ApiResponse;
 
 namespace Pokemon.Services
 {
-    public class PokemonService : IPokemonService
+    public class PokemonApiService : IPokemonApiService
     {
         private readonly HttpClient _client;
         private static List<string>? _cachedPokemonNames;
         private static readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
 
-        public PokemonService(HttpClient client)
+        public PokemonApiService(HttpClient client)
         {
             _client = client;
-            _client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
         }
 
         public async Task<Result<Pokemon.Models.Pokemon>> GetPokemonByNameOrId(string nameOrId, CancellationToken cancellationToken = default)

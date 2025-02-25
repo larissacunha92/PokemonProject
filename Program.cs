@@ -10,8 +10,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddScoped<IPokemonService, PokemonService>(); // ? Register PokemonService
-builder.Services.AddHttpClient<IPokemonService, PokemonService>(client =>
+builder.Services.AddScoped<IPokemonApiService, PokemonApiService>();
+builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
 {
     client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
 });

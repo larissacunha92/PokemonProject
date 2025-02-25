@@ -3,7 +3,7 @@ using static Pokemon.Models.ApiResponse;
 
 namespace Pokemon.Services.Interfaces
 {
-    public interface IPokemonService
+    public interface IPokemonApiService
     {
         Task<Result<Pokemon.Models.Pokemon>> GetPokemonByNameOrId(string nameOrId, CancellationToken cancellationToken = default);
         Task<Result<List<Pokemon.Models.Pokemon>>> GetRandomPokemons(CancellationToken cancellationToken = default);
