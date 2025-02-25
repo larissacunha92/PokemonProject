@@ -1,4 +1,4 @@
-﻿<div class="pokemon-card-generic" @onclick="OpenModal">
+﻿<div class="pokemon-card" @onclick="OpenModal">
     @if (!string.IsNullOrWhiteSpace(Player))
     {
         <p><b>Trainer:</b> @Player</p>
@@ -15,7 +15,7 @@
         </div>
     }
 
-    <p class="pokemon-name">@Pokemon.Name</p>
+    <p class="capitalize">@Pokemon.Name</p>
 
     @if (!string.IsNullOrWhiteSpace(BattleResult))
     {

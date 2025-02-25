@@ -1,5 +1,6 @@
 ﻿@using Pokemon.Components.Shared
 @using Pokemon.Services.Interfaces
+@using BlazorBootstrap
 @inject IPokemonService client
 @namespace Pokemon.Components.Shared
 
@@ -20,7 +21,10 @@
             <ul class="stats-list">
                 @foreach (var stat in SelectedPokemon.Stats)
                 {
-                    <li><b>@stat.stat.name:</b> @stat.base_stat</li>
+                    <li class="capitalize"><b>@stat.stat.name:</b> @stat.base_stat</li>
+                    <Progress Class="mb-3">
+                        <ProgressBar Type="ProgressType.Striped" Color="GetStatColor(stat.stat.name)" Width="Math.Min(stat.base_stat, 100)" />
+                    </Progress>
                 }
             </ul>
 
@@ -36,6 +40,20 @@
     private bool IsModalOpen = false;
     private bool IsClosing = false;
     private Models.Pokemon? SelectedPokemon;
+
+    private ProgressColor GetStatColor(string statName)
+    {
+        return statName switch
+        {
+            "hp" => ProgressColor.Danger,
+            "attack" => ProgressColor.Info,
+            "defense" => ProgressColor.Warning,
+            "speed" => ProgressColor.Success,
+            "special-attack" => ProgressColor.Primary,
+            "special-defense" => ProgressColor.Secondary,
+            _ => ProgressColor.Dark
+        };
+    }
 
     private async Task CloseModal()
     {
