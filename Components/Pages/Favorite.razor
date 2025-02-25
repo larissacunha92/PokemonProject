@@ -1,0 +1,44 @@
+﻿@page "/favorite"
+@using Pokemon.Models
+@using Pokemon.Services
+@using Pokemon.Services.Interfaces
+@inject FavoritePokemonService FavoriteService
+
+<h1>My Favorite Pokémon</h1>
+
+@if (FavoritesList == null)
+{
+    <p>Loading...</p>
+}
+else if (FavoritesList.Count == 0)
+{
+    <p>No favorites added yet.</p>
+}
+else
+{
+    <ul>
+        @foreach (var pokemon in FavoritesList)
+        {
+            <li>
+                <img src="@pokemon.ImageUrl" width="100" />
+                @pokemon.Name
+                <button @onclick="() => RemoveFromFavorites(pokemon.PokemonId)">Remove</button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<FavoritePokemon>? FavoritesList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        FavoritesList = await FavoriteService.GetFavoritesAsync();
+    }
+
+    private async Task RemoveFromFavorites(int pokemonId)
+    {
+        await FavoriteService.RemoveFavoriteAsync(pokemonId);
+        FavoritesList = await FavoriteService.GetFavoritesAsync(); // Refresh list
+    }
+}

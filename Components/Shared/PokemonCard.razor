@@ -1,4 +1,9 @@
-﻿<div class="pokemon-card" @onclick="OpenModal">
+﻿@using Pokemon.Models
+@using Pokemon.Services
+@using BlazorBootstrap
+@inject FavoritePokemonService FavoriteService
+
+<div class="pokemon-card" @onclick="OpenModal">
     @if (!string.IsNullOrWhiteSpace(Player))
     {
         <p><b>Trainer:</b> @Player</p>
@@ -17,10 +22,11 @@
 
     <p class="capitalize">@Pokemon.Name</p>
 
-    @if (!string.IsNullOrWhiteSpace(BattleResult))
-    {
-        <p><b>HP:</b> @Pokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat</p>
-    }
+    <button class="favorite" @onclick="ToggleFavorite">
+        <i class="@(IsFavorite ? "bi bi-x" : "bi bi-heart-fill")"></i>
+        @(IsFavorite ? " Unfavorite" : " Add to Favorites")
+    </button>
+
 </div>
 
 @code {
@@ -29,6 +35,28 @@
 
     [Parameter] public string? Player { get; set; }
     [Parameter] public string BattleResult { get; set; } = "";
+
+    private bool IsFavorite;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var favorites = await FavoriteService.GetFavoritesAsync();
+        IsFavorite = favorites.Any(p => p.Name == Pokemon.Name);
+    }
+
+    private async Task ToggleFavorite()
+    {
+        if (IsFavorite)
+        {
+            await FavoriteService.RemoveFavoriteAsync(Pokemon.Id);
+        }
+        else
+        {
+            await FavoriteService.AddFavoriteAsync(Pokemon.Id, Pokemon.Name, Pokemon.Sprites.front_default);
+        }
+
+        IsFavorite = !IsFavorite;
+    }
 
     private async Task OpenModal()
     {

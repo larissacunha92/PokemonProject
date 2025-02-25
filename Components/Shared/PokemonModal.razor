@@ -1,7 +1,9 @@
 ﻿@using Pokemon.Components.Shared
+@using Pokemon.Services
 @using Pokemon.Services.Interfaces
 @using BlazorBootstrap
-@inject IPokemonApiService client
+@inject FavoritePokemonService FavoriteService
+@inject IPokemonApiService ApiService
 @namespace Pokemon.Components.Shared
 
 @if (IsModalOpen && SelectedPokemon != null)
@@ -27,7 +29,9 @@
                     </Progress>
                 }
             </ul>
-
+            <button class="favorite" @onclick="ToggleFavorite">
+                @(IsFavorite ? "❌ Unfavorite" : "🤍 Add to Favorites")
+            </button>
             <button class="close-btn" @onclick="CloseModal">Close</button>
         </div>
     </div>
@@ -39,7 +43,23 @@
 
     private bool IsModalOpen = false;
     private bool IsClosing = false;
-    private Models.Pokemon? SelectedPokemon;
+    private Models.Pokemon SelectedPokemon;
+
+    private bool IsFavorite;
+
+    private async Task ToggleFavorite()
+    {
+        if (IsFavorite)
+        {
+            await FavoriteService.RemoveFavoriteAsync(SelectedPokemon.Id);
+        }
+        else
+        {
+            await FavoriteService.AddFavoriteAsync(SelectedPokemon.Id, SelectedPokemon.Name, SelectedPokemon.Sprites.front_default);
+        }
+
+        IsFavorite = !IsFavorite;
+    }
 
     private ProgressColor GetStatColor(string statName)
     {
@@ -76,15 +96,19 @@
 
     public async Task OpenModal(string name)
     {
+        
         if (string.IsNullOrWhiteSpace(name)) return;
 
-        var result = await client.GetPokemonByNameOrId(name.ToLower());
+        var result = await ApiService.GetPokemonByNameOrId(name.ToLower());
 
         if (result.IsSuccess && result.Data != null)
         {
             SelectedPokemon = result.Data;
             IsClosing = false;
             IsModalOpen = true;
+
+            var favorites = await FavoriteService.GetFavoritesAsync();
+            IsFavorite = favorites.Any(p => p.Name == SelectedPokemon.Name);
         }
         else
         {

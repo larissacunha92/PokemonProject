@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Pokemon.Components;
+using Pokemon.Data;
 using Pokemon.Services;
 using Pokemon.Services.Interfaces;
 
@@ -15,6 +17,11 @@ builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
 {
     client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
 });
+builder.Services.AddScoped<FavoritePokemonService>();
+
+builder.Services.AddDbContext<PokemonDbContext>(options =>
+    options.UseSqlite("Data Source=pokemon.db"));
+
 
 var app = builder.Build();
 

@@ -133,3 +133,15 @@ h1:focus {
 .capitalize {
     text-transform: capitalize
 }
+
+.favorite {
+    border: none;
+    border-radius: 6px;
+    padding: 6px;
+    max-width: fit-content;
+    align-self: center;
+}
+
+.favorite i {
+    color: red;
+}
