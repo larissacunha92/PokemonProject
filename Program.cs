@@ -10,8 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient();
-
 builder.Services.AddScoped<IPokemonApiService, PokemonApiService>();
 builder.Services.AddScoped<IBattleHistoryService, BattleHistoryService>();
 builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
