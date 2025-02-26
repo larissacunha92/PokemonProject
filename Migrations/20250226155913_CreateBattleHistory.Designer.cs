@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pokemon.Data;
 
@@ -10,9 +11,11 @@ using Pokemon.Data;
 namespace Pokemon.Migrations
 {
     [DbContext(typeof(PokemonDbContext))]
-    partial class PokemonDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250226155913_CreateBattleHistory")]
+    partial class CreateBattleHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -26,15 +29,7 @@ namespace Pokemon.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Pokemon1Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Pokemon1Picture")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Pokemon2Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

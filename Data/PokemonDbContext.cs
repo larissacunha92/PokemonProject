@@ -8,5 +8,6 @@ namespace Pokemon.Data
         public PokemonDbContext(DbContextOptions<PokemonDbContext> options) : base(options) { }
 
         public DbSet<FavoritePokemon> Favorites { get; set; }
+        public DbSet<BattleHistory> BattleHistories { get; set; }
     }
 }

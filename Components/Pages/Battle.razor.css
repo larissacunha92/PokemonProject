@@ -1,11 +1,4 @@
-﻿.battle-title {
-    text-align: center;
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.search-box {
+﻿.search-box {
     display: flex;
     gap: 5px;
     align-items: center;

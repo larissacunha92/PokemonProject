@@ -6,13 +6,6 @@
     align-items: center;
 }
 
-.button-container {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-}
-
 .page-item.active .page-link {
     background-color: #dc3545;
     border-color: #dc3545;

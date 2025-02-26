@@ -1,0 +1,83 @@
+﻿@page "/battle-history"
+@using Pokemon.Models
+@using Pokemon.Services.Interfaces
+@inject IBattleHistoryService BattleHistoryService
+
+<h1 class="page-title">Battle History</h1>
+
+@if (battleHistories == null)
+{
+    <p>Loading battle history...</p>
+}
+else if (!battleHistories.Any())
+{
+    <p>No battles recorded.</p>
+}
+else
+{
+    <table class="table table-striped text-center align-middle">
+        <thead>
+            <tr>
+                <th>Pokemon 1</th>
+                <th>Pokemon 2</th>
+                <th>Date</th>
+                <th>Result</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var battle in battleHistories)
+            {
+                <tr>
+                    <td>
+                        <div style="text-align:center;">
+                            <img src="@battle.Pokemon1Picture" alt="Pokemon 1" style="max-width:100px; height:auto;" />
+                            <p>@battle.Pokemon1Name</p>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="text-align:center;">
+                            <img src="@battle.Pokemon2Picture" alt="Pokemon 2" style="max-width:100px; height:auto;" />
+                            <p>@battle.Pokemon2Name</p>
+                        </div>
+                    </td>
+                    <td>@battle.Date.ToString("g")</td>
+                    <td>@battle.Result</td>
+                    <td>
+                        <button class="btn btn-danger modal-button" @onclick="() => DeleteRecord(battle.Id)">
+                            Delete Record
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Models.BattleHistory>? battleHistories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        battleHistories = await BattleHistoryService.GetBattleHistoriesAsync();
+    }
+
+    private async Task DeleteRecord(int id)
+    {
+        try
+        {
+            await BattleHistoryService.DeleteBattleHistoryAsync(id);
+            battleHistories = await BattleHistoryService.GetBattleHistoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception to the console (or use your logging mechanism)
+            Console.WriteLine($"Error deleting battle record: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+}

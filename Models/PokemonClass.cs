@@ -2,7 +2,7 @@
 
 namespace Pokemon.Models
 {
-    public class Pokemon
+    public class PokemonClass
     {
         public int Id { get; set; }
 

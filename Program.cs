@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<IPokemonApiService, PokemonApiService>();
+builder.Services.AddScoped<IBattleHistoryService, BattleHistoryService>();
 builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
 {
     client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
@@ -20,7 +21,7 @@ builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
 builder.Services.AddScoped<FavoritePokemonService>();
 
 builder.Services.AddDbContext<PokemonDbContext>(options =>
-    options.UseSqlite("Data Source=pokemon.db"));
+    options.UseSqlite("Data Source=pokemon.db;"));
 
 
 var app = builder.Build();

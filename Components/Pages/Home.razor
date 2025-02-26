@@ -95,7 +95,7 @@ else
     int ItemsPerPage = 10;
     int TotalPages;
     bool PageIsLoading = true;
-    List<Models.Pokemon> pokemonList = new();
+    List<Models.PokemonClass> pokemonList = new();
     string SearchQuery = "";
     bool IsSearching = false;
     List<string> AllPokemonNames = new();
@@ -146,13 +146,13 @@ else
             else
             {
                 Console.WriteLine($"Error fetching Pokemon details: {detailsResult.ErrorMessage}");
-                pokemonList = new List<Models.Pokemon>();
+                pokemonList = new List<Models.PokemonClass>();
             }
         }
         else
         {
             Console.WriteLine($"Error fetching paginated Pokemon: {paginatedResult.ErrorMessage}");
-            pokemonList = new List<Models.Pokemon>();
+            pokemonList = new List<Models.PokemonClass>();
         }
 
         PageIsLoading = false;

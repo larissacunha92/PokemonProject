@@ -4,11 +4,6 @@
 @inject FavoritePokemonService FavoriteService
 
 <div class="pokemon-card" @onclick="OpenModal">
-    @if (!string.IsNullOrWhiteSpace(Player))
-    {
-        <p><b>Trainer:</b> @Player</p>
-    }
-
     @if (!string.IsNullOrWhiteSpace(Pokemon.Sprites?.front_default))
     {
         <img src="@Pokemon.Sprites.front_default" width="100" />
@@ -22,18 +17,12 @@
 
     <p class="capitalize">@Pokemon.Name</p>
 
-    <button class="favorite" @onclick="ToggleFavorite">
-        <i class="@(IsFavorite ? "bi bi-x" : "bi bi-heart-fill")"></i>
-        @(IsFavorite ? " Unfavorite" : " Add to Favorites")
-    </button>
-
 </div>
 
 @code {
-    [Parameter, EditorRequired] public Models.Pokemon Pokemon { get; set; } = default!;
+    [Parameter, EditorRequired] public Models.PokemonClass Pokemon { get; set; } = default!;
     [Parameter] public PokemonModal? ModalRef { get; set; }
 
-    [Parameter] public string? Player { get; set; }
     [Parameter] public string BattleResult { get; set; } = "";
 
     private bool IsFavorite;
@@ -44,24 +33,8 @@
         IsFavorite = favorites.Any(p => p.Name == Pokemon.Name);
     }
 
-    private async Task ToggleFavorite()
-    {
-        if (IsFavorite)
-        {
-            await FavoriteService.RemoveFavoriteAsync(Pokemon.Id);
-        }
-        else
-        {
-            await FavoriteService.AddFavoriteAsync(Pokemon.Id, Pokemon.Name, Pokemon.Sprites.front_default);
-        }
-
-        IsFavorite = !IsFavorite;
-    }
-
     private async Task OpenModal()
     {
-        if (Player == null){
-            await ModalRef.OpenModal(Pokemon.Name);
-        }
+        await ModalRef.OpenModal(Pokemon.Name);
     }
 }

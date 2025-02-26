@@ -3,8 +3,9 @@
 @using Pokemon.Services.Interfaces
 @using BlazorBootstrap
 @inject IPokemonApiService client
+@inject IBattleHistoryService battleHistoryService
 
-<h1 class="battle-title" style="display: flex; justify-content: center; margin-bottom: 40px">Battle Arena</h1>
+<h1 class="page-title">Battle Arena</h1>
 
 <div class="battle-container">
     <div class="search-box">
@@ -54,24 +55,24 @@
     <div class="battle-container">
         @if (FirstPokemon != null && !IsLoading)
         {
-            <PokemonCard Pokemon="@FirstPokemon" Player="Player 1"/>
+            <PokemonCard Pokemon="@FirstPokemon" ModalRef="modalRef" />
         }
 
         @if (FirstPokemon != null && SecondPokemon != null && !IsLoading)
         {
-            <button class="btn btn-danger" @onclick="StartBattle">Fight</button>
+            <button class="btn btn-danger" @onclick="StartBattle" disabled="@(!String.IsNullOrEmpty(BattleResult))">Fight</button>
         }
 
         @if (SecondPokemon != null && !IsLoading)
         {
-            <PokemonCard Pokemon="@SecondPokemon" Player="Player 2" />
+            <PokemonCard Pokemon="@SecondPokemon" ModalRef="modalRef" />
         }
     </div>
 }
 
 @if (!string.IsNullOrEmpty(BattleResult) && !IsLoading)
 {
-    <h2 class="battle-title">@BattleResult</h2>
+    <h1 class="page-title">@BattleResult</h1>
 }
 
 <PokemonModal @ref="modalRef" OnClose="CloseModal" />
@@ -82,8 +83,8 @@
     string SecondPokemonSearchQuery = "";
     List<string> FirstPokemonSuggestions = new();
     List<string> SecondPokemonSuggestions = new();
-    Models.Pokemon? FirstPokemon = null;
-    Models.Pokemon? SecondPokemon = null;
+    Models.PokemonClass? FirstPokemon = null;
+    Models.PokemonClass? SecondPokemon = null;
     string BattleResult = "";
     List<string> AllPokemonNames = new();
     bool IsLoading = false;
@@ -178,7 +179,7 @@
         {
             await SelectFirstPokemon(result.Data![0].Name);
             await SelectSecondPokemon(result.Data![1].Name);
-            StartBattle();
+            await StartBattle();
         }
         else
         {
@@ -206,7 +207,7 @@
         }
     }
 
-    private void StartBattle()
+    private async Task StartBattle()
     {
         int firstPokemonHP = FirstPokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat ?? 0;
         int secondPokemonHP = SecondPokemon.Stats?.FirstOrDefault(s => s.stat.name == "hp")?.base_stat ?? 0;
@@ -226,6 +227,18 @@
         {
             BattleResult = "It's a tie!";
         }
+
+        var battleHistory = new Pokemon.Models.BattleHistory
+            {
+                Date = DateTime.Now,
+                Pokemon1Picture = FirstPokemon.Sprites?.front_default ?? "",
+                Pokemon2Picture = SecondPokemon.Sprites?.front_default ?? "",
+                Pokemon1Name = char.ToUpper(FirstPokemon.Name[0]) + FirstPokemon.Name.Substring(1),
+                Pokemon2Name = char.ToUpper(SecondPokemon.Name[0]) + SecondPokemon.Name.Substring(1),
+                Result = BattleResult
+            };
+
+        await battleHistoryService.SaveBattleHistoryAsync(battleHistory);
     }
 
     private void CloseModal()

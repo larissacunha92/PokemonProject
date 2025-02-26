@@ -26,7 +26,7 @@ namespace Pokemon.Services
                 {
                     PokemonId = pokemonId,
                     Name = name,
-                    ImageUrl = imageUrl
+                    ImageUrl = imageUrl ?? ""
                 });
 
                 await _context.SaveChangesAsync();

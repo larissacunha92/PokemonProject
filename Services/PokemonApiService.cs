@@ -17,37 +17,37 @@ namespace Pokemon.Services
             _client = client;
         }
 
-        public async Task<Result<Pokemon.Models.Pokemon>> GetPokemonByNameOrId(string nameOrId, CancellationToken cancellationToken = default)
+        public async Task<Result<Pokemon.Models.PokemonClass>> GetPokemonByNameOrId(string nameOrId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var pokemon = await _client.GetFromJsonAsync<Pokemon.Models.Pokemon>($"{nameOrId}", cancellationToken);
+                var pokemon = await _client.GetFromJsonAsync<Pokemon.Models.PokemonClass>($"{nameOrId}", cancellationToken);
                 return pokemon != null
-                    ? Result<Pokemon.Models.Pokemon>.Success(pokemon)
-                    : Result<Pokemon.Models.Pokemon>.Fail("Pokemon not found.");
+                    ? Result<Pokemon.Models.PokemonClass>.Success(pokemon)
+                    : Result<Pokemon.Models.PokemonClass>.Fail("Pokemon not found.");
             }
             catch (Exception e)
             {
-                return Result<Pokemon.Models.Pokemon>.Fail($"An error occurred while fetching Pokemon data. Error: {e.Message}");
+                return Result<Pokemon.Models.PokemonClass>.Fail($"An error occurred while fetching Pokemon data. Error: {e.Message}");
             }
         }
 
-        public async Task<Result<List<Pokemon.Models.Pokemon>>> GetRandomPokemons(CancellationToken cancellationToken = default)
+        public async Task<Result<List<Pokemon.Models.PokemonClass>>> GetRandomPokemons(CancellationToken cancellationToken = default)
         {
             try
             {
                 var allPokemonResult = await LoadAllPokemonNames(cancellationToken);
 
                 if (!allPokemonResult.IsSuccess || allPokemonResult.Data == null || !allPokemonResult.Data.Any())
-                    return Result<List<Pokemon.Models.Pokemon>>.Fail("Failed to load Pokemon names or no Pokemon available.");
+                    return Result<List<Pokemon.Models.PokemonClass>>.Fail("Failed to load Pokemon names or no Pokemon available.");
 
                 var pokemonCount = allPokemonResult.Data.Count;
                 int half = (pokemonCount + 1) / 2;
                 const int maxAttempts = 10;
                 int attempts = 0;
 
-                Pokemon.Models.Pokemon? firstPokemon = null;
-                Pokemon.Models.Pokemon? secondPokemon = null;
+                Pokemon.Models.PokemonClass? firstPokemon = null;
+                Pokemon.Models.PokemonClass? secondPokemon = null;
 
                 while (attempts < maxAttempts && (firstPokemon == null || secondPokemon == null))
                 {
@@ -76,20 +76,20 @@ namespace Pokemon.Services
 
                 if (firstPokemon == null || secondPokemon == null)
                 {
-                    return Result<List<Pokemon.Models.Pokemon>>.Fail("Failed to retrieve random Pokemon after multiple attempts.");
+                    return Result<List<Pokemon.Models.PokemonClass>>.Fail("Failed to retrieve random Pokemon after multiple attempts.");
                 }
 
-                var randomPokemons = new List<Pokemon.Models.Pokemon>
+                var randomPokemons = new List<Pokemon.Models.PokemonClass>
                 {
                     firstPokemon,
                     secondPokemon
                 };
 
-                return Result<List<Pokemon.Models.Pokemon>>.Success(randomPokemons);
+                return Result<List<Pokemon.Models.PokemonClass>>.Success(randomPokemons);
             }
             catch (Exception e)
             {
-                return Result<List<Pokemon.Models.Pokemon>>.Fail($"An error occurred while fetching random Pokemon. Error: {e.Message}");
+                return Result<List<Pokemon.Models.PokemonClass>>.Fail($"An error occurred while fetching random Pokemon. Error: {e.Message}");
             }
         }
 
@@ -111,7 +111,7 @@ namespace Pokemon.Services
             }
         }
 
-        public async Task<Result<List<Pokemon.Models.Pokemon>>> GetFullPokemonDetails(List<PokemonResult> pokemonResults, CancellationToken cancellationToken = default)
+        public async Task<Result<List<Pokemon.Models.PokemonClass>>> GetFullPokemonDetails(List<PokemonResult> pokemonResults, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -126,11 +126,11 @@ namespace Pokemon.Services
                 });
 
                 var pokemonList = (await Task.WhenAll(tasks)).ToList();
-                return Result<List<Pokemon.Models.Pokemon>>.Success(pokemonList);
+                return Result<List<Pokemon.Models.PokemonClass>>.Success(pokemonList);
             }
             catch (Exception e)
             {
-                return Result<List<Pokemon.Models.Pokemon>>.Fail($"An error occurred while fetching Pokemon details. Error: {e.Message}");
+                return Result<List<Pokemon.Models.PokemonClass>>.Fail($"An error occurred while fetching Pokemon details. Error: {e.Message}");
             }
         }
 

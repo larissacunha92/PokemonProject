@@ -1,10 +1,11 @@
 ﻿@page "/favorite"
+@using Pokemon.Components.Shared
 @using Pokemon.Models
 @using Pokemon.Services
 @using Pokemon.Services.Interfaces
 @inject FavoritePokemonService FavoriteService
 
-<h1>My Favorite Pokémon</h1>
+<h1 class="page-title">Favorite Pokemon List</h1>
 
 @if (FavoritesList == null)
 {
@@ -16,29 +17,51 @@ else if (FavoritesList.Count == 0)
 }
 else
 {
-    <ul>
+    <ul class="favorite-list">
         @foreach (var pokemon in FavoritesList)
         {
             <li>
-                <img src="@pokemon.ImageUrl" width="100" />
-                @pokemon.Name
-                <button @onclick="() => RemoveFromFavorites(pokemon.PokemonId)">Remove</button>
+                <div class="pokemon-card" @onclick="() => OpenModal(pokemon)">
+                    @if (!string.IsNullOrWhiteSpace(@pokemon.ImageUrl))
+                    {
+                        <img src="@pokemon.ImageUrl" width="100" />
+                    }
+                    else
+                    {
+                        <div class="no-picture-div">
+                            <p>Picture not found</p>
+                        </div>
+                    }
+
+                    <p>@pokemon.Name</p>
+                </div>
             </li>
         }
     </ul>
 }
 
+<PokemonModal @ref="modalRef" OnClose="CloseModal" />
+
 @code {
     private List<FavoritePokemon>? FavoritesList;
+    private PokemonModal? modalRef;
 
     protected override async Task OnInitializedAsync()
     {
         FavoritesList = await FavoriteService.GetFavoritesAsync();
     }
 
-    private async Task RemoveFromFavorites(int pokemonId)
+    private async Task OpenModal(FavoritePokemon pokemon)
     {
-        await FavoriteService.RemoveFavoriteAsync(pokemonId);
-        FavoritesList = await FavoriteService.GetFavoritesAsync(); // Refresh list
+        if (modalRef is not null && !string.IsNullOrWhiteSpace(pokemon.Name))
+        {
+            await modalRef.OpenModal(pokemon.Name);
+        }
+    }
+
+    private async void CloseModal()
+    {
+        FavoritesList = await FavoriteService.GetFavoritesAsync();
+        StateHasChanged();
     }
 }

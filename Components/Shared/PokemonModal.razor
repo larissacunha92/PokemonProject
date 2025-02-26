@@ -29,10 +29,12 @@
                     </Progress>
                 }
             </ul>
-            <button class="favorite" @onclick="ToggleFavorite">
-                @(IsFavorite ? "❌ Unfavorite" : "🤍 Add to Favorites")
-            </button>
-            <button class="close-btn" @onclick="CloseModal">Close</button>
+            <div class="button-container">
+                <button class="btn btn-danger modal-button" @onclick="ToggleFavorite">
+                    @(IsFavorite ? "Unfavorite" : "Favorite")
+                </button>
+                <button class="btn btn-danger modal-button" @onclick="CloseModal">Close</button>
+            </div>
         </div>
     </div>
 }
@@ -43,7 +45,7 @@
 
     private bool IsModalOpen = false;
     private bool IsClosing = false;
-    private Models.Pokemon SelectedPokemon;
+    private Models.PokemonClass SelectedPokemon;
 
     private bool IsFavorite;
 
