@@ -1,10 +1,12 @@
-﻿@using Pokemon.Components.Shared
-@using Pokemon.Services
-@using Pokemon.Services.Interfaces
+﻿@using PokemonProject.Components
+@using PokemonProject.Models
+@using PokemonProject.Models.DTOs
+@using PokemonProject.Services
+@using PokemonProject.Services.Interfaces
 @using BlazorBootstrap
-@inject FavoritePokemonService FavoriteService
+@namespace PokemonProject.Components.Shared
+@inject IFavoritePokemonService FavoriteService
 @inject IPokemonApiService ApiService
-@namespace Pokemon.Components.Shared
 
 @if (IsModalOpen && SelectedPokemon != null)
 {
@@ -45,7 +47,7 @@
 
     private bool IsModalOpen = false;
     private bool IsClosing = false;
-    private Models.PokemonClass SelectedPokemon;
+    private Pokemon SelectedPokemon;
 
     private bool IsFavorite;
 
@@ -110,7 +112,14 @@
             IsModalOpen = true;
 
             var favorites = await FavoriteService.GetFavoritesAsync();
-            IsFavorite = favorites.Any(p => p.Name == SelectedPokemon.Name);
+            if (favorites.IsSuccess && favorites.Data != null)
+            {
+                IsFavorite = favorites.Data.Any(p => p.Name == SelectedPokemon.Name);
+            }
+            else
+            {
+                IsFavorite = false;
+            }
         }
         else
         {
@@ -120,5 +129,4 @@
 
         StateHasChanged();
     }
-
 }

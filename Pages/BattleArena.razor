@@ -1,7 +1,12 @@
-﻿@page "/battle"
-@using Pokemon.Components.Shared
-@using Pokemon.Services.Interfaces
+﻿@page "/battle-arena"
+@using PokemonProject.Components
+@using PokemonProject.Components.Shared
+@using PokemonProject.Models.DTOs
+@using PokemonProject.Models.Entities
+@using PokemonProject.Services.Interfaces
+@using PokemonProject.Data
 @using BlazorBootstrap
+@using PokemonProject.Models
 @inject IPokemonApiService client
 @inject IBattleHistoryService battleHistoryService
 
@@ -83,8 +88,8 @@
     string SecondPokemonSearchQuery = "";
     List<string> FirstPokemonSuggestions = new();
     List<string> SecondPokemonSuggestions = new();
-    Models.PokemonClass? FirstPokemon = null;
-    Models.PokemonClass? SecondPokemon = null;
+    Pokemon? FirstPokemon = null;
+    Pokemon? SecondPokemon = null;
     string BattleResult = "";
     List<string> AllPokemonNames = new();
     bool IsLoading = false;
@@ -228,7 +233,7 @@
             BattleResult = "It's a tie!";
         }
 
-        var battleHistory = new Pokemon.Models.BattleHistory
+        var battleHistory = new Models.Entities.BattleHistory
             {
                 Date = DateTime.Now,
                 Pokemon1Picture = FirstPokemon.Sprites?.front_default ?? "",

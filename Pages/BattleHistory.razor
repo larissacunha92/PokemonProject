@@ -1,6 +1,6 @@
 ﻿@page "/battle-history"
-@using Pokemon.Models
-@using Pokemon.Services.Interfaces
+@using PokemonProject.Models
+@using PokemonProject.Services.Interfaces
 @inject IBattleHistoryService BattleHistoryService
 
 <h1 class="page-title">Battle History</h1>
@@ -55,11 +55,21 @@ else
 }
 
 @code {
-    private List<Models.BattleHistory>? battleHistories;
+    private List<Models.Entities.BattleHistory>? battleHistories;
 
     protected override async Task OnInitializedAsync()
     {
-        battleHistories = await BattleHistoryService.GetBattleHistoriesAsync();
+        var result = await BattleHistoryService.GetBattleHistoriesAsync();
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            battleHistories = result.Data;
+        }
+        else
+        {
+            battleHistories = new List<Models.Entities.BattleHistory>();
+            Console.WriteLine($"Error fetching battle histories: {result.ErrorMessage}");
+        }
     }
 
     private async Task DeleteRecord(int id)
@@ -67,7 +77,16 @@ else
         try
         {
             await BattleHistoryService.DeleteBattleHistoryAsync(id);
-            battleHistories = await BattleHistoryService.GetBattleHistoriesAsync();
+            var result = await BattleHistoryService.GetBattleHistoriesAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                battleHistories = result.Data;
+            }
+            else
+            {
+                battleHistories = new List<Models.Entities.BattleHistory>();
+                Console.WriteLine($"Error fetching battle histories after delete: {result.ErrorMessage}");
+            }
         }
         catch (Exception ex)
         {

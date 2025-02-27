@@ -1,4 +1,4 @@
-﻿namespace Pokemon.Models
+﻿namespace PokemonProject.Models.Entities
 {
     public class BattleHistory
     {

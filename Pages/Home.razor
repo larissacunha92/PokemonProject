@@ -1,8 +1,11 @@
 ﻿@page "/"
-@using Pokemon.Components.Shared
-@using Pokemon.Services.Interfaces
-@inject IPokemonApiService client
+@using PokemonProject.Components.Shared
+@using PokemonProject.Components
+@using PokemonProject.Models.DTOs
+@using PokemonProject.Services.Interfaces
 @using BlazorBootstrap
+@using PokemonProject.Data
+@inject IPokemonApiService client
 
 @if (!PageIsLoading)
 {
@@ -95,7 +98,7 @@ else
     int ItemsPerPage = 10;
     int TotalPages;
     bool PageIsLoading = true;
-    List<Models.PokemonClass> pokemonList = new();
+    List<Pokemon> pokemonList = new();
     string SearchQuery = "";
     bool IsSearching = false;
     List<string> AllPokemonNames = new();
@@ -146,13 +149,13 @@ else
             else
             {
                 Console.WriteLine($"Error fetching Pokemon details: {detailsResult.ErrorMessage}");
-                pokemonList = new List<Models.PokemonClass>();
+                pokemonList = new List<Pokemon>();
             }
         }
         else
         {
             Console.WriteLine($"Error fetching paginated Pokemon: {paginatedResult.ErrorMessage}");
-            pokemonList = new List<Models.PokemonClass>();
+            pokemonList = new List<Pokemon>();
         }
 
         PageIsLoading = false;

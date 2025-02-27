@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Pokemon.Migrations
+namespace PokemonProject.Migrations
 {
     /// <inheritdoc />
     public partial class AddPokemonNamesToBattleHistory : Migration

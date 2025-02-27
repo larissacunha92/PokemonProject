@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Pokemon.Data;
-using Pokemon.Models;
+using PokemonProject.Data;
+using PokemonProject.Models.Entities;
+using PokemonProject.Services.Interfaces;
+using static PokemonProject.Models.DTOs.ApiResponse;
 
-namespace Pokemon.Services
+namespace PokemonProject.Services
 {
-    public class FavoritePokemonService
+    public class FavoritePokemonService : IFavoritePokemonService
     {
         private readonly PokemonDbContext _context;
 
@@ -13,14 +15,22 @@ namespace Pokemon.Services
             _context = context;
         }
 
-        public async Task<List<FavoritePokemon>> GetFavoritesAsync()
+        public async Task<Result<List<FavoritePokemon>>> GetFavoritesAsync()
         {
-            return await _context.Favorites.ToListAsync();
+            try
+            {
+                var favorites = await _context.Favorites.ToListAsync();
+                return Result<List<FavoritePokemon>>.Success(favorites);
+            }
+            catch (Exception e)
+            {
+                return Result<List<FavoritePokemon>>.Fail($"An error occurred while fetching Favorite Pokemon data. Error: {e.Message}");
+            }
         }
 
-        public async Task AddFavoriteAsync(int pokemonId, string name, string imageUrl)
+        public async Task<Result<bool>> AddFavoriteAsync(int pokemonId, string name, string imageUrl)
         {
-            if (!await _context.Favorites.AnyAsync(f => f.PokemonId == pokemonId))
+            try
             {
                 _context.Favorites.Add(new FavoritePokemon
                 {
@@ -30,16 +40,31 @@ namespace Pokemon.Services
                 });
 
                 await _context.SaveChangesAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception e)
+            {
+                return Result<bool>.Fail($"An error occurred while adding favorite Pokemon. Error: {e.Message}");
             }
         }
 
-        public async Task RemoveFavoriteAsync(int pokemonId)
+        public async Task<Result<bool>> RemoveFavoriteAsync(int pokemonId)
         {
-            var favorite = await _context.Favorites.FirstOrDefaultAsync(f => f.PokemonId == pokemonId);
-            if (favorite != null)
+            try
             {
-                _context.Favorites.Remove(favorite);
-                await _context.SaveChangesAsync();
+                var favorite = await _context.Favorites.FirstOrDefaultAsync(f => f.PokemonId == pokemonId);
+                if (favorite != null)
+                {
+                    _context.Favorites.Remove(favorite);
+                    await _context.SaveChangesAsync();
+                }
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception e)
+            {
+                return Result<bool>.Fail($"An error occurred while removing a favorite Pokemon. Error: {e.Message}");
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Pokemon.Models;
+using PokemonProject.Models.Entities;
 
-namespace Pokemon.Data
+namespace PokemonProject.Data
 {
     public class PokemonDbContext : DbContext
     {

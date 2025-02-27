@@ -1,15 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Pokemon.Models;
+﻿using PokemonProject.Models.Entities;
+using static PokemonProject.Models.DTOs.ApiResponse;
 
-namespace Pokemon.Services.Interfaces
+namespace PokemonProject.Services.Interfaces
 {
-    public class IFavoritePokemonService
+    public interface IFavoritePokemonService
     {
-        public interface IFavoritePokemonService
-        {
-            Task AddFavoriteAsync(int pokemonId, string name, string imageUrl);
-            Task<List<FavoritePokemon>> GetFavoritesAsync();
-            Task RemoveFavoriteAsync(int pokemonId)
-        }
+        Task<Result<bool>> AddFavoriteAsync(int pokemonId, string name, string imageUrl);
+        Task<Result<List<FavoritePokemon>>> GetFavoritesAsync();
+        Task<Result<bool>> RemoveFavoriteAsync(int pokemonId);
+
     }
 }
+

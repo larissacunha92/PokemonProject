@@ -1,4 +1,4 @@
-﻿namespace Pokemon.Models
+﻿namespace PokemonProject.Models.DTOs
 {
     public class Stat
     {

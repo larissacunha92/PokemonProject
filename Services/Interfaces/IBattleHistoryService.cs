@@ -1,11 +1,12 @@
-﻿using Pokemon.Models;
+﻿using PokemonProject.Models.Entities;
+using static PokemonProject.Models.DTOs.ApiResponse;
 
-namespace Pokemon.Services.Interfaces
+namespace PokemonProject.Services.Interfaces
 {
     public interface IBattleHistoryService
     {
-        Task<List<BattleHistory>> GetBattleHistoriesAsync();
-        Task SaveBattleHistoryAsync(BattleHistory battleHistory);
-        Task DeleteBattleHistoryAsync(int id);
+        Task<Result<List<BattleHistory>>> GetBattleHistoriesAsync();
+        Task<Result<bool>> SaveBattleHistoryAsync(BattleHistory battleHistory);
+        Task<Result<bool>> DeleteBattleHistoryAsync(int id);
     }
 }

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Pokemon.Components;
-using Pokemon.Data;
-using Pokemon.Services;
-using Pokemon.Services.Interfaces;
+using PokemonProject;
+using PokemonProject.Data;
+using PokemonProject.Services;
+using PokemonProject.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,16 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IPokemonApiService, PokemonApiService>();
-builder.Services.AddScoped<IBattleHistoryService, BattleHistoryService>();
 builder.Services.AddHttpClient<IPokemonApiService, PokemonApiService>(client =>
 {
     client.BaseAddress = new Uri("https://pokeapi.co/api/v2/pokemon/");
 });
-builder.Services.AddScoped<FavoritePokemonService>();
+
+builder.Services.AddScoped<IBattleHistoryService, BattleHistoryService>();
+
+builder.Services.AddScoped<IFavoritePokemonService, FavoritePokemonService>();
 
 builder.Services.AddDbContext<PokemonDbContext>(options =>
-    options.UseSqlite("Data Source=pokemon.db;"));
+    options.UseSqlite("Data Source=pokemon.db;",
+        sqlOptions => sqlOptions.MigrationsAssembly("PokemonProject")));
 
 
 var app = builder.Build();

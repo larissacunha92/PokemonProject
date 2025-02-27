@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Pokemon.Data;
+using PokemonProject.Data;
 
 #nullable disable
 
-namespace Pokemon.Migrations
+namespace PokemonProject.Migrations
 {
     [DbContext(typeof(PokemonDbContext))]
-    [Migration("20250226155913_CreateBattleHistory")]
-    partial class CreateBattleHistory
+    [Migration("20250226170433_AddPokemonNamesToBattleHistory")]
+    partial class AddPokemonNamesToBattleHistory
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace Pokemon.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
 
-            modelBuilder.Entity("Pokemon.Models.BattleHistory", b =>
+            modelBuilder.Entity("PokemonProject.Models.BattleHistory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -29,7 +29,15 @@ namespace Pokemon.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Pokemon1Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Pokemon1Picture")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Pokemon2Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -46,7 +54,7 @@ namespace Pokemon.Migrations
                     b.ToTable("BattleHistories");
                 });
 
-            modelBuilder.Entity("Pokemon.Models.FavoritePokemon", b =>
+            modelBuilder.Entity("PokemonProject.Models.FavoritePokemon", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

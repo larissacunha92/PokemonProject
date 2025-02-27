@@ -1,7 +1,9 @@
-﻿@using Pokemon.Models
-@using Pokemon.Services
+﻿@using PokemonProject.Components.Shared
+@using PokemonProject.Models
+@using PokemonProject.Services
+@using PokemonProject.Models.DTOs
 @using BlazorBootstrap
-@inject FavoritePokemonService FavoriteService
+@inject IFavoritePokemonService FavoriteService
 
 <div class="pokemon-card" @onclick="OpenModal">
     @if (!string.IsNullOrWhiteSpace(Pokemon.Sprites?.front_default))
@@ -20,7 +22,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public Models.PokemonClass Pokemon { get; set; } = default!;
+    [Parameter, EditorRequired] public Pokemon Pokemon { get; set; } = default!;
     [Parameter] public PokemonModal? ModalRef { get; set; }
 
     [Parameter] public string BattleResult { get; set; } = "";
@@ -29,8 +31,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var favorites = await FavoriteService.GetFavoritesAsync();
-        IsFavorite = favorites.Any(p => p.Name == Pokemon.Name);
+        var favoritesResult = await FavoriteService.GetFavoritesAsync();
+        if (favoritesResult.IsSuccess && favoritesResult.Data != null)
+        {
+            IsFavorite = favoritesResult.Data.Any(p => p.Name == Pokemon.Name);
+        }
+        else
+        {
+            IsFavorite = false;
+        }
     }
 
     private async Task OpenModal()

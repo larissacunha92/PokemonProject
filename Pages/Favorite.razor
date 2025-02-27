@@ -1,9 +1,11 @@
 ﻿@page "/favorite"
-@using Pokemon.Components.Shared
-@using Pokemon.Models
-@using Pokemon.Services
-@using Pokemon.Services.Interfaces
-@inject FavoritePokemonService FavoriteService
+@using PokemonProject.Components.Shared
+@using PokemonProject.Components
+@using PokemonProject.Models
+@using PokemonProject.Models.Entities
+@using PokemonProject.Services
+@using PokemonProject.Services.Interfaces
+@inject IFavoritePokemonService FavoriteService
 
 <h1 class="page-title">Favorite Pokemon List</h1>
 
@@ -48,7 +50,17 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        FavoritesList = await FavoriteService.GetFavoritesAsync();
+        var result = await FavoriteService.GetFavoritesAsync();
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            FavoritesList = result.Data; // Extract Data property here as well.
+        }
+        else
+        {
+            FavoritesList = new List<Models.Entities.FavoritePokemon>();
+            Console.WriteLine($"Error fetching battle histories after delete: {result.ErrorMessage}");
+        }
     }
 
     private async Task OpenModal(FavoritePokemon pokemon)
@@ -61,7 +73,16 @@ else
 
     private async void CloseModal()
     {
-        FavoritesList = await FavoriteService.GetFavoritesAsync();
+        var result = await FavoriteService.GetFavoritesAsync();
+        if (result.IsSuccess && result.Data != null)
+        {
+            FavoritesList = result.Data; // Extract Data property here as well.
+        }
+        else
+        {
+            FavoritesList = new List<Models.Entities.FavoritePokemon>();
+            Console.WriteLine($"Error fetching battle histories after delete: {result.ErrorMessage}");
+        }
         StateHasChanged();
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Pokemon.Models
+namespace PokemonProject.Models.DTOs
 {
-    public class PokemonClass
+    public class Pokemon
     {
         public int Id { get; set; }
 

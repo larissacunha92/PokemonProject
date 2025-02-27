@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text.Json.Serialization;
-
-namespace Pokemon.Models
+﻿namespace PokemonProject.Models.DTOs
 {
     public class Sprites
     {
