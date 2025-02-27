@@ -9,7 +9,7 @@ namespace PokemonProject.Services
     {
         private readonly HttpClient _client;
         private static List<string>? _cachedPokemonNames;
-        private static readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1); // Um mecanismo de sincronização para garantir que, ao atualizar o cache, somente uma thread faça isso de cada vez, evitando condições de corrida.
 
         public PokemonApiService(HttpClient client)
         {
@@ -164,7 +164,8 @@ namespace PokemonProject.Services
 
                             if (response.Data!.Results.Any())
                             {
-                                allPokemon.AddRange(response.Data.Results.Select(p => char.ToUpper(p.Name[0]) + p.Name.Substring(1))); offset += limit;
+                                allPokemon.AddRange(response.Data.Results.Select(p => char.ToUpper(p.Name[0]) + p.Name.Substring(1))); 
+                                offset += limit;
                             }
                             else
                             {
